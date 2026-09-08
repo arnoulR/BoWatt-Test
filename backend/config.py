@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     openai_api_key: str | None = None
+    openai_chat_model: str = "gpt-5.6-luna"
     openai_embedding_model: str = "text-embedding-3-small"
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "shared_documents"

@@ -27,6 +27,9 @@ docker compose up --build
 
 The first document may take longer because Docling and FastEmbed download their local models.
 
+`OPENAI_CHAT_MODEL` selects the model used by the research endpoint and defaults to
+`gpt-5.6-luna`.
+
 ## Upload sources
 
 `POST /api/sources` accepts TXT files under the repeated field `files`.
@@ -40,7 +43,19 @@ The endpoint returns once files are queued. Documents move through `queued`, `pr
 `ready`, `failed`, or `interrupted` in SQLite. Reupload an interrupted or failed file to retry it.
 Changing `OPENAI_EMBEDDING_MODEL` requires a new collection and data directory.
 
-`POST /api/research` keeps the existing streamed plain-text response.
+## Research requests
+
+`POST /api/research` accepts JSON containing a non-empty `request` and streams the model's
+plain-text response:
+
+```sh
+curl -N http://localhost:8787/api/research \
+  -H "Content-Type: application/json" \
+  -d '{"request":"Explain why the sky is blue."}'
+```
+
+This first version is a stateless LangChain chat call. It does not use uploaded documents,
+search the web, retain conversation history, or perform multi-step research.
 
 ## Tests
 

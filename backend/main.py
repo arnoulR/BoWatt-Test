@@ -1,5 +1,4 @@
-import asyncio
-from collections.abc import AsyncGenerator, AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Annotated
 
@@ -10,20 +9,20 @@ from fastapi.responses import StreamingResponse
 from config import Settings
 from ingestion import IngestionService, StorageUnavailable, UploadValidationError
 from models import ResearchRequest, UploadResponse
+from research_agent import ResearchAgent
 from services import build_ingestion_service
-
-
-async def generate_answer(request: str) -> AsyncIterator[str]:
-    yield f"# Research\n\nYour question: {request}\n\n"
-    await asyncio.sleep(0.5)
-    yield "LLM answer here\n\n"
 
 
 def create_app(
     settings: Settings | None = None,
     ingestion_service: IngestionService | None = None,
+    research_agent: ResearchAgent | None = None,
 ) -> FastAPI:
     app_settings = settings or Settings()
+    agent = research_agent or ResearchAgent(
+        api_key=app_settings.openai_api_key,
+        model_name=app_settings.openai_chat_model,
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -65,7 +64,7 @@ def create_app(
     @app.post("/api/research")
     def research(payload: ResearchRequest) -> StreamingResponse:
         return StreamingResponse(
-            generate_answer(payload.request),
+            agent.stream(payload.request),
             media_type="text/plain",
         )
 
