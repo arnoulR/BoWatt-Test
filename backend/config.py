@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,7 +9,9 @@ class Settings(BaseSettings):
 
     openai_api_key: str | None = None
     openai_chat_model: str = "gpt-5.6-luna"
+    openai_reasoning_effort: str = "low"
     openai_embedding_model: str = "text-embedding-3-small"
+    parallel_api_key: str | None = None
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "shared_documents"
     data_dir: Path = Path("data")
@@ -19,6 +22,11 @@ class Settings(BaseSettings):
     embedding_dimensions: int = 1536
     chunk_tokens: int = 600
     sparse_model: str = "Qdrant/bm25"
+
+    research_max_fetched_urls: int = Field(default=8, ge=0)
+    research_max_concurrent_calls: int = Field(default=3, ge=1)
+    research_max_retries: int = Field(default=2, ge=0)
+    research_provider_timeout_seconds: float = Field(default=30, gt=0)
 
     @property
     def database_path(self) -> Path:

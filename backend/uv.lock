@@ -104,6 +104,7 @@ dependencies = [
     { name = "docling" },
     { name = "fastapi" },
     { name = "langchain-openai" },
+    { name = "parallel-web" },
     { name = "pydantic-settings" },
     { name = "python-multipart" },
     { name = "qdrant-client", extra = ["fastembed"] },
@@ -129,9 +130,10 @@ requires-dist = [
     { name = "docling", specifier = ">=2.28.0" },
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "langchain-openai", specifier = ">=0.3.9" },
+    { name = "parallel-web", specifier = ">=1.3,<2" },
     { name = "pydantic-settings", specifier = ">=2.7.0" },
     { name = "python-multipart", specifier = ">=0.0.20" },
-    { name = "qdrant-client", extras = ["fastembed"], specifier = ">=1.14.2" },
+    { name = "qdrant-client", extras = ["fastembed"], specifier = ">=1.19,<1.20" },
     { name = "tiktoken", specifier = ">=0.9.0" },
     { name = "torch", marker = "sys_platform != 'linux'", specifier = ">=2.2.0" },
     { name = "torch", marker = "sys_platform == 'linux'", specifier = ">=2.2.0", index = "https://download.pytorch.org/whl/cpu" },
@@ -1207,6 +1209,23 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/f3/9a/ffbd852d58bd74a617fe2f8ee6a58a96982271ce41cf981eab22190b4a4b/pandas-3.0.5-cp312-cp312-pyemscripten_2024_0_wasm32.whl", hash = "sha256:b2acb4650527eec6822c3dadb2b771277b65e7dae7a267d4bccf65fd1bb3fbce", size = 7197652, upload-time = "2026-07-22T22:18:22.502Z" },
     { url = "https://files.pythonhosted.org/packages/70/b5/d2d3e9ae73362ba4229651b0ee1455cf78073a1ce585f6ff693782ce263e/pandas-3.0.5-cp312-cp312-win_amd64.whl", hash = "sha256:80a611068e8a3ac23f7398c6c14eb46dc974e5cc9997f653e2dcfd1da74edd41", size = 9831691, upload-time = "2026-07-22T22:18:24.534Z" },
     { url = "https://files.pythonhosted.org/packages/52/51/dea1e89d6a6796b9c43f85a09b484ee03edb8a4c4842e73e200a8c11301c/pandas-3.0.5-cp312-cp312-win_arm64.whl", hash = "sha256:25ff585b972a18ef1fe9ffa3ac6544d9950508aa76832e5147640b6022821e49", size = 9105796, upload-time = "2026-07-22T22:18:27.064Z" },
+]
+
+[[package]]
+name = "parallel-web"
+version = "1.3.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "distro" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "sniffio" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7a/ab/5d55a9b0f41176129c2870bfe969a89d34449fc87f9cffab8cdf5011d5d1/parallel_web-1.3.3.tar.gz", hash = "sha256:ad2a699bf5463e1d269e79b70ffe32911a2917320e8f5b3cbd5a0cecd83a86a3", size = 162416, upload-time = "2026-09-01T00:25:58.265Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7c/2f/07dcdc7964fc9baf2b93cbc67aaf3530688bb11283148c9acf7246c51a9e/parallel_web-1.3.3-py3-none-any.whl", hash = "sha256:5400231d091139259d09fd26cc379e5968340446eec389d0c8c5e347fa159b7d", size = 176174, upload-time = "2026-09-01T00:25:57.011Z" },
 ]
 
 [[package]]

@@ -8,39 +8,49 @@ from fastapi.responses import StreamingResponse
 
 from config import Settings
 from ingestion import IngestionService, StorageUnavailable, UploadValidationError
-from models import ResearchRequest, UploadResponse
-from research_agent import ResearchAgent
-from services import build_ingestion_service
+from models import (
+    ResearchAnswerDeltaEvent,
+    ResearchCompleteEvent,
+    ResearchErrorEvent,
+    ResearchProgressEvent,
+    ResearchRequest,
+    ResearchRunResponse,
+    UploadResponse,
+)
+from research_service import ResearchService
+from services import build_ingestion_service, build_research_service
 
 
 def create_app(
     settings: Settings | None = None,
     ingestion_service: IngestionService | None = None,
-    research_agent: ResearchAgent | None = None,
+    research_service: ResearchService | None = None,
 ) -> FastAPI:
     app_settings = settings or Settings()
-    agent = research_agent or ResearchAgent(
-        api_key=app_settings.openai_api_key,
-        model_name=app_settings.openai_chat_model,
-    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-        service = ingestion_service or build_ingestion_service(app_settings)
-        await service.start()
-        app.state.ingestion = service
-
+        ingestion = ingestion_service or build_ingestion_service(app_settings)
+        research: ResearchService | None = None
         try:
+            await ingestion.start()
+            research = research_service or build_research_service(app_settings, ingestion)
+            await research.start()
+            app.state.ingestion = ingestion
+            app.state.research = research
             yield
         finally:
-            await service.stop()
+            if research is not None:
+                await research.stop()
+            await ingestion.stop()
 
     app = FastAPI(lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=app_settings.cors_origin_list,
-        allow_methods=["POST"],
+        allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],
+        expose_headers=["X-Research-Run-ID"],
     )
 
     @app.post(
@@ -62,11 +72,38 @@ def create_app(
             ) from error
 
     @app.post("/api/research")
-    def research(payload: ResearchRequest) -> StreamingResponse:
+    async def research(payload: ResearchRequest) -> StreamingResponse:
+        run_id = await app.state.research.create_run(payload.request)
+
+        async def markdown_stream() -> AsyncGenerator[str, None]:
+            answer_parts: list[str] = []
+            async for event in app.state.research.stream_run(run_id, payload.request):
+                if isinstance(event, ResearchProgressEvent):
+                    yield f"{event.message}\n"
+                elif isinstance(event, ResearchAnswerDeltaEvent):
+                    answer_parts.append(event.delta)
+                elif isinstance(event, ResearchCompleteEvent):
+                    yield "Complete.\n\nAnswer:\n\n"
+                    yield "".join(answer_parts)
+                elif isinstance(event, ResearchErrorEvent):
+                    yield f"Failed: {event.message}\n"
+
         return StreamingResponse(
-            agent.stream(payload.request),
+            markdown_stream(),
             media_type="text/plain",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+                "X-Research-Run-ID": run_id,
+            },
         )
+
+    @app.get("/api/research/{run_id}", response_model=ResearchRunResponse)
+    async def get_research(run_id: str) -> ResearchRunResponse:
+        run = await app.state.research.get_run(run_id)
+        if run is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Run not found.")
+        return run
 
     return app
 
